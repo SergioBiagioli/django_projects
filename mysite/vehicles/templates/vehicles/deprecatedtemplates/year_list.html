@@ -1,0 +1,115 @@
+{% extends "base_bootstrap.html" %}
+
+{% load crispy_forms_tags %}
+
+<style>
+    .centered-form {
+        max-width: 600px; /* Establece el ancho máximo deseado */
+        margin: 0 auto; /* Centra el formulario horizontalmente */
+    }
+    .table-responsive{
+      max-height: 300px;
+    }
+</style>
+
+{% block content %}
+  <div class="row">
+    <div class="col-md-7">
+      <h1>Years List <h5><a href="{% url 'vehicles:all'  %}">Return to Vehicles</a></h5></h1>
+
+      <input id="search_here" class='form-control mb-3 mt-3' placeholder="type here to search.." />
+      
+      <div id="results">
+        {% if year_list %}
+        <table class="table table-hover">
+          <thead>
+            <tr>
+              <th>Year</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for year in year_list %}
+            <tr>
+              <td>{{ year.year }}</td>
+              <td>
+                <a href="{% url 'vehicles:year_update' year.id %}">Update</a> |
+                <a href="{% url 'vehicles:year_delete' year.id %}">Delete</a>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        {% else %}
+          <p>There are no years in the library.</p>
+        {% endif %}
+      </div>
+    </div>  
+    <div class="col-md-5">
+      <h2>Add a Year</h2>
+      <form action="{% url 'vehicles:year_create' %}" method="post" class="centered-form">
+        {% csrf_token %}
+        <table>
+        {{ form|crispy }}
+        </table>
+        <input type="submit" value="Submit">
+      </form>
+    </div>
+  </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  const data = JSON.parse('{{ year_list_json|escapejs }}');
+  console.log(data);  
+
+  const input = document.getElementById('search_here');
+  const results = document.getElementById('results'); // Actualiza solo esta parte del DOM
+  console.log(input);
+
+  let filteredArr = [];
+
+  const displayResults = (arr) => {
+    let table = `<table class="table table-hover">
+                   <thead>
+                     <tr>
+                       <th>Year</th>
+                       <th>Actions</th>
+                     </tr>
+                   </thead>
+                   <tbody>`;
+    arr.forEach(year => {
+      table += `<tr>
+                  <td>${year.year}</td>
+                  <td>
+                    <a href="/vehicles/year/${year.id}/update/">Update</a> |
+                    <a href="/vehicles/year/${year.id}/delete/">Delete</a>
+                  </td>
+                </tr>`;
+    });
+    table += `</tbody></table>`;
+    results.innerHTML = table;
+  };
+
+  // Display initial data
+  displayResults(data);
+
+  input.addEventListener('keyup', (e) => {
+    const value = e.target.value.toLowerCase().trim();
+    const words = value.split(/\s+/); // Divide la entrada en palabras separadas por espacios
+
+    if(value === "") {
+      displayResults(data);
+    } else {
+      filteredArr = data.filter(year => {
+        const combinedText = `${year.year}`.toLowerCase();
+
+        // Verifica que cada palabra de la entrada esté en el texto combinado
+        return words.every(word => combinedText.includes(word));
+      });
+      console.log(filteredArr);
+      displayResults(filteredArr);
+    }
+  });
+</script>
+{% endblock scripts %}

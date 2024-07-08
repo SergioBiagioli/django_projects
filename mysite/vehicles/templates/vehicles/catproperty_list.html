@@ -1,0 +1,167 @@
+{% extends "base_bootstrap.html" %}
+{% load crispy_forms_tags %}
+
+{% block navbar %}
+    {% include "vehicles/navbar.html" %}
+{% endblock %}
+
+{% block content %}
+
+<style>
+    .btn-update {
+        background-color: #7da0aa;
+        color: white;
+    }
+    .btn-delete {
+        background-color: #b4424e;
+        color: white;
+    }
+    .btn-update, .btn-delete {
+        width: 60px;
+        text-align: center;
+    }
+    .list-group-item {
+        padding: 0.5rem 1rem;
+    }
+
+    .category-tree ul {
+        list-style-type: none;
+        margin: 0;
+        padding: 0;
+    }
+
+    .category-tree ul ul {
+        margin-left: 20px;
+        padding-left: 20px;
+        border-left: 1px solid #ccc;
+    }
+
+    .category-tree li {
+        margin: 5px 0;
+        padding: 5px;
+        position: relative;
+    }
+
+    .category-tree .caret {
+        cursor: pointer;
+        user-select: none;
+    }
+
+    .category-tree .caret::before {
+        content: "\25B6";
+        display: inline-block;
+        margin-right: 6px;
+        transition: transform 0.3s;
+    }
+
+    .category-tree .caret-down::before {
+        transform: rotate(90deg);
+    }
+
+    .category-tree .nested {
+        display: block;
+    }
+
+    .category-tree .active {
+        display: block;
+    }
+
+    .highlight {
+        background-color: #f7ed9b;
+    }
+</style>
+
+<h1>{{ title }} List</h1>
+
+
+<div class="row">
+    <div class="col-md-13">">
+        <form id="add-catproperty-form" action="{% url create_url %}" method="post" class="mb-4">
+            {% csrf_token %}
+            <div class="form-group">
+                <input type="hidden" name="category" id="category-id" value="">
+                <select name="property" class="form-control mb-2" required>
+                    <option value="" disabled selected>Select property</option>
+                    {% for property in properties %}
+                        <option value="{{ property.id }}">{{ property.name }}</option>
+                    {% endfor %}
+                </select>
+                <input type="text" name="value" class="form-control" placeholder="Add new property value" required>
+            </div>
+            <button type="submit" class="btn btn-primary mt-2">Add Property</button>
+        </form>
+
+        <div class="mt-4 category-tree" >
+            <ul class="list-group">
+                {% for category in categories %}
+                    {% include 'vehicles/category_tree_item.html' with category=category %}
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+    
+<!-- 2da division de pantalla -->
+  
+</div>
+
+
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        var toggler = document.getElementsByClassName("caret");
+        for (var i = 0; i < toggler.length; i++) {
+            toggler[i].addEventListener("click", function() {
+                var nestedList = this.parentElement.querySelector(".nested");
+                toggleNested(nestedList, this);
+            });
+        }
+
+        var clickableItems = document.getElementsByClassName("clickable");
+        for (var j = 0; j < clickableItems.length; j++) {
+            clickableItems[j].addEventListener("click", function() {
+                var categoryId = this.parentElement.dataset.id;
+                document.querySelector("#category-id").value = categoryId;
+                document.querySelector("#add-catproperty-form input[name='value']").focus();
+                
+                // Resaltar la categoría seleccionada
+                var highlightedItems = document.getElementsByClassName("highlight");
+                while (highlightedItems.length) {
+                    highlightedItems[0].classList.remove("highlight");
+                }
+                this.parentElement.classList.add("highlight");
+            });
+        }
+
+        function toggleNested(element, toggler) {
+            if (element) {
+                if (element.classList.contains("active")) {
+                    collapseNested(element);
+                    toggler.classList.remove("caret-down");
+                } else {
+                    expandNested(element);
+                    toggler.classList.add("caret-down");
+                }
+            }
+        }
+
+        function expandNested(element) {
+            element.classList.add("active");
+            element.querySelectorAll(".nested").forEach(subElement => {
+                subElement.classList.add("active");
+                subElement.previousElementSibling.classList.add("caret-down");
+            });
+        }
+
+        function collapseNested(element) {
+            element.classList.remove("active");
+            element.querySelectorAll(".nested").forEach(subElement => {
+                subElement.classList.remove("active");
+                subElement.previousElementSibling.classList.remove("caret-down");
+            });
+        }
+    });
+</script>
+{% endblock %}

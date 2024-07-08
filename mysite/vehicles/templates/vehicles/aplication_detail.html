@@ -1,0 +1,73 @@
+<!-- vehicles/aplication_detail.html -->
+{% extends 'base_bootstrap.html' %}
+{% load static %}
+
+{% block navbar %}
+    {% include "vehicles/navbar.html" %}
+{% endblock %}
+
+{% block content %}
+<h1>{{ aplication.segment }} > {{ aplication.make }} > {{ aplication.year }} > {{ aplication.model }}</h1>
+
+<p><strong>Segment:</strong> {{ aplication.segment }}</p>
+<p><strong>Make:</strong> {{ aplication.make }}</p>
+<p><strong>Year:</strong> {{ aplication.year }}</p>
+<p><strong>Model:</strong> {{ aplication.model }}</p>
+
+<!-- Estilos CSS personalizados para el tamaño de las imágenes -->
+<style>
+    .carousel-item img {
+        width: 700px;
+        height: 500px;
+        object-fit: contain; /* Ajustar para que la imagen cubra completamente el área */
+    }
+</style>
+
+<!-- Carrusel de fotos -->
+<div id="photoCarousel" class="carousel slide" data-bs-ride="carousel">
+    <div class="carousel-indicators">
+        {% for photo in aplication.photos.all %}
+        <button type="button" data-bs-target="#photoCarousel" data-bs-slide-to="{{ forloop.counter0 }}"
+            class="{% if forloop.first %}active{% endif %}" aria-current="true" aria-label="Slide {{ forloop.counter }}">
+        </button>
+        {% endfor %}
+    </div>
+    <div class="carousel-inner">
+        {% for photo in aplication.photos.all %}
+        <div class="carousel-item {% if forloop.first %}active{% endif %}">
+            <img src="{{ photo.photo.url }}" class="d-block w-100" alt="Image of {{ aplication }}">
+        </div>
+        {% endfor %}
+    </div>
+    <button class="carousel-control-prev" type="button" data-bs-target="#photoCarousel" data-bs-slide="prev">
+        <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+        <span class="visually-hidden">Previous</span>
+    </button>
+    <button class="carousel-control-next" type="button" data-bs-target="#photoCarousel" data-bs-slide="next">
+        <span class="carousel-control-next-icon" aria-hidden="true"></span>
+        <span class="visually-hidden">Next</span>
+    </button>
+</div>
+
+<!-- Botón para Cargar Fotos -->
+<h3>Add Photo</h3>
+<form method="post" enctype="multipart/form-data" action="{% url 'vehicles:upload_photo' aplication.pk %}">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit" class="btn btn-primary">Upload</button>
+</form>
+
+<!-- Botón para Eliminar Fotos -->
+<h3>Delete Photo</h3>
+<ul>
+    {% for photo in aplication.photos.all %}
+    <li>
+        <img src="{{ photo.photo.url }}" alt="Image of {{ aplication }}" style="width: 100px; height: auto;">
+        <form method="post" action="{% url 'vehicles:delete_photo' photo.pk %}">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-danger">Delete</button>
+        </form>
+    </li>
+    {% endfor %}
+</ul>
+{% endblock %}

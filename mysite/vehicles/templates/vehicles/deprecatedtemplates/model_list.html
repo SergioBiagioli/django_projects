@@ -1,0 +1,58 @@
+{% extends "base_bootstrap.html" %}
+
+
+{% block content %}
+
+{% load crispy_forms_tags %}
+
+    <style>
+        .centered-form {
+            max-width: 600px; /* Establece el ancho máximo deseado */
+            margin: 0 auto; /* Centra el formulario horizontalmente */
+        }
+    </style>
+  <div class="row">
+    <div class="col-md-7">
+      <h1>Models List <h5><a href="{% url 'vehicles:all'  %}">Return to Vehicles</a></h5></h1>
+      {% if model_list %}
+      <table class="table table-hover">
+        <thead>
+          <tr>
+            <th>Model</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for model in model_list %}
+          <tr>
+            <td>{{ model.model }}</td>
+            <td>
+              <a href="{% url 'vehicles:model_update' model.id %}">Update</a> |
+              <a href="{% url 'vehicles:model_delete' model.id %}">Delete</a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% else %}
+        <p>There are no models in the library.</p>
+      {% endif %}
+    </div>
+    <div class="col-md-5">
+
+
+
+      <h2>Add a Model</h2>
+      <form action="{% url 'vehicles:model_create' %}" method="post" class="centered-form">
+        {% csrf_token %}
+        <table>
+        {{ form|crispy }}
+        </table>
+        <input type="submit" value="Submit">
+      </form>
+
+
+    </div>
+
+  </div>
+{% endblock %}

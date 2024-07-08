@@ -1,0 +1,23 @@
+<li class="list-group-item" data-id="{{ category.id }}">
+    <span class="caret clickable caret-down">{{ category.category }}</span>
+    {% if category.catpropertycategory.exists %}
+        <ul class="list-group mt-2 ms-3 nested active">
+            {% for catproperty in category.catpropertycategory.all %}
+                <li class="list-group-item" data-id="{{ catproperty.id }}">
+                    <span>{{ catproperty.property.name }}: {{ catproperty.value }}</span>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <a href="{% url update_url catproperty.id %}" class="btn btn-update btn-sm">Update</a>
+                        <a href="{% url delete_url catproperty.id %}" class="btn btn-delete btn-sm">Delete</a>
+                    </div>
+                </li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+    {% if category.children.exists %}
+        <ul class="list-group mt-2 ms-3 nested active">
+            {% for child_category in category.children.all %}
+                {% include 'vehicles/category_tree_item.html' with category=child_category %}
+            {% endfor %}
+        </ul>
+    {% endif %}
+</li>

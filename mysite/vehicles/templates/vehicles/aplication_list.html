@@ -1,0 +1,33 @@
+
+{% extends "base_bootstrap.html" %}
+
+{% block navbar %}
+    {% include "vehicles/navbar.html" %}
+{% endblock %}
+
+{% block content %}
+    {% include "vehicles/base_table.html" %}
+    <p>
+      {% if make_count > 0 %}
+        <a href="{% url 'vehicles:aplication_create' %}">Add an application</a>
+      {% else %}
+        Please add a make before you add an application.
+      {% endif %}
+    </p>
+    <p>
+      <a href="{% url 'vehicles:make_list' %}">View makes</a> ({{ make_count }}) |
+      <a href="{% url 'vehicles:make_create' %}">Add a make</a>
+    </p>
+    <p>
+      <a href="{% url 'vehicles:year_list' %}">View years</a> ({{ year_count }}) |
+      <a href="{% url 'vehicles:year_create' %}">Add a year</a>
+    </p>
+    <p>
+      <a href="{% url 'vehicles:model_list' %}">View models</a> ({{ model_count }}) |
+      <a href="{% url 'vehicles:model_create' %}">Add a model</a>
+    </p>
+    <p>
+      <a href="{% url 'vehicles:segment_list' %}">View Segments</a> ({{ segment_count }}) |
+      <a href="{% url 'vehicles:segment_create' %}">Add a segment</a>
+    </p>
+{% endblock %}

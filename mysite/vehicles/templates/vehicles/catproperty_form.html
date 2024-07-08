@@ -1,0 +1,25 @@
+{% extends "base_bootstrap.html" %}
+
+{% block content %}
+{% load crispy_forms_tags %}
+
+<style>
+    .centered-form {
+        max-width: 600px; /* Establece el ancho máximo deseado */
+        margin: 0 auto; /* Centra el formulario horizontalmente */
+    }
+</style>
+
+
+<form action="{% url 'vehicles:catproperty_create' %}" method="post" id="catpropertyForm" class="centered-form">
+  {% csrf_token %}
+  <table>
+  {{ form|crispy }}
+  </table>
+  {% if form.errors %}
+    <p style="color: red;">{{ form.errors }}</p>
+  {% endif %}
+  <input type="submit" value="Submit">
+</form>
+
+{% endblock %}

@@ -1,0 +1,12 @@
+{% for aplication in aplication_list %}
+<tr class="auto-row" data-href="{% url 'vehicles:aplication_update' aplication.id %}">
+  <td>{{ aplication.segment }}</td>  
+  <td>{{ aplication.make }}</td>
+  <td>{{ aplication.year }}</td>
+  <td>{{ aplication.model }}</td>
+  <td>
+    <a href="{% url 'vehicles:aplication_update' aplication.id %}">Update</a> |
+    <a href="{% url 'vehicles:aplication_delete' aplication.id %}">Delete</a>
+  </td>
+</tr>
+{% endfor %}

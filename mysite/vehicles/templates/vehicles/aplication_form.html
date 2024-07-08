@@ -1,0 +1,21 @@
+{% extends "base_bootstrap.html" %}
+
+{% block content %}
+{% load crispy_forms_tags %}
+
+<style>
+    .centered-form {
+        max-width: 600px; /* Establece el ancho máximo deseado */
+        margin: 0 auto; /* Centra el formulario horizontalmente */
+    }
+</style>
+
+<form action="" method="post" class="centered-form">
+    {% csrf_token %}
+    <table>
+        {{ form|crispy }}
+    </table>
+    <input type="submit" value="Submit">
+    <input type="submit" onclick="window.location='{% url 'vehicles:all' %}' ; return false;" value="Cancel">
+</form>
+{% endblock %}

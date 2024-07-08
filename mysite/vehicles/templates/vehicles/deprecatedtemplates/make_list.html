@@ -1,0 +1,74 @@
+{% extends "base_bootstrap.html" %}
+
+{% block content %}
+
+{% load static %}  
+
+{% load crispy_forms_tags %}
+<style>
+    .centered-form {
+        max-width: 600px; /* Establece el ancho máximo deseado */
+        margin: 0 auto; /* Centra el formulario horizontalmente */
+    }
+</style>
+
+  <div class="row">
+    <div class="col-md-7">
+      <h1>Makes List <h5><a href="{% url 'vehicles:all' %}">Return to Vehicles</a></h5></h1>
+
+      <input id="search_here" class='form-control mb-3 mt-3' placeholder="type here to search.." />
+
+      <div id="results">
+        {% if make_list %}
+        <table class="table table-hover">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="table-body">
+            {% for make in make_list %}
+            <tr>
+              <td>{{ make.make }}</td>
+              <td>
+                <a href="{% url 'vehicles:make_update' make.id %}">Update</a> |
+                <a href="{% url 'vehicles:make_delete' make.id %}">Delete</a>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        {% else %}
+          <p>There are no makes in the library.</p>
+        {% endif %}
+      </div>
+    </div>
+    <div class="col-md-5">
+
+      <h2>Add a Make</h2>
+      <form action="{% url 'vehicles:make_create' %}" method="post" id="makeForm">
+        {% csrf_token %}
+        <table>
+        {{ form|crispy }}
+        </table>
+        {% if form.errors %}
+          <p style="color: red;">{{ form.errors }}</p>
+        {% endif %}
+        <input type="submit" value="Submit">
+      </form>
+    </div>
+  </div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{% static 'js/search_table.js' %}"></script>
+<script>
+    const data = JSON.parse('{{ make_list_json|escapejs }}');
+    const headers = JSON.parse('{{ headers|escapejs }}');
+    const fields = JSON.parse('{{ fields|escapejs }}');
+    const title = '{{ title }}';
+    
+    initSearchTable(data, headers, fields, title);
+</script>
+{% endblock scripts %}

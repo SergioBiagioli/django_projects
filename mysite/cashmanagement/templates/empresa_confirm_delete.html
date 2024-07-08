@@ -1,0 +1,15 @@
+{% extends "base_bootstrap.html" %}
+
+{% block content %}
+
+<h1>Borrar Empresa</h1>
+
+<p>Estas seguro que quieres eliminar la empresa: {{ empresa.nombre }}?</p>
+
+<form action="" method="POST">
+  {% csrf_token %}
+  <input type="submit" value="Si, borrar">
+  <input type="submit" onclick="window.location='{% url 'cashmanagement:empresa_list' %}' ; return false;" value="Cancelar">
+</form>
+
+{% endblock %}

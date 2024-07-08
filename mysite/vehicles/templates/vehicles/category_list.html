@@ -1,0 +1,172 @@
+<!-- vehicles/category_list.html -->
+{% extends "base_bootstrap.html" %}
+{% load crispy_forms_tags %}
+
+{% block navbar %}
+    {% include "vehicles/navbar.html" %}
+{% endblock %}
+
+{% block content %}
+
+<style>
+    .btn-update {
+        background-color: #7da0aa;
+        color: white;
+    }
+    .btn-delete {
+        background-color: #b4424e;
+        color: white;
+    }
+    .btn-update, .btn-delete {
+        width: 60px;
+        text-align: center;
+    }
+    .list-group-item {
+        padding: 0.5rem 1rem;
+    }
+
+    .category-tree ul {
+        list-style-type: none;
+        margin: 0;
+        padding: 0;
+    }
+
+    .category-tree ul ul {
+        margin-left: 20px;
+        padding-left: 20px;
+        border-left: 1px solid #ccc;
+    }
+
+    .category-tree li {
+        margin: 5px 0;
+        padding: 5px;
+        position: relative;
+    }
+
+    .category-tree .caret {
+        cursor: pointer;
+        user-select: none;
+    }
+
+    .category-tree .caret::before {
+        content: "\25B6";
+        display: inline-block;
+        margin-right: 6px;
+        transition: transform 0.3s;
+    }
+
+    .category-tree .caret-down::before {
+        transform: rotate(90deg);
+    }
+
+    .category-tree .nested {
+        display: none;
+    }
+
+    .category-tree .active {
+        display: block;
+    }
+
+    .highlight {
+        background-color: #fcf7c9;
+    }
+</style>
+
+<h1>{{ title }} List</h1>
+<form id="add-category-form" action="{% url create_url %}" method="post" class="mb-4">
+    {% csrf_token %}
+    <div class="form-group">
+        <input type="text" name="category" class="form-control" placeholder="Add new category" required>
+        <input type="hidden" name="parent" value="">
+    </div>
+    <button type="submit" class="btn btn-primary mt-2">Add Category</button>
+</form>
+
+<div class="mt-4 category-tree">
+    <ul class="list-group">
+        {% for category in categories %}
+            <li class="list-group-item" data-id="{{ category.id }}">
+                <span class="caret clickable caret-down">{{ category.category }}</span>
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <a href="{% url update_url category.id %}" class="btn btn-update btn-sm">Update</a>
+                        <a href="{% url delete_url category.id %}" class="btn btn-delete btn-sm">Delete</a>
+                    </div>
+                </div>
+                {% if category.children.exists %}
+                    <ul class="list-group mt-2 ms-3 nested active">
+                        {% for subcategory in category.children.all %}
+                            <li class="list-group-item" data-id="{{ subcategory.id }}">
+                                <span class="caret clickable caret-down">{{ subcategory.category }}</span>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <a href="{% url update_url subcategory.id %}" class="btn btn-update btn-sm">Update</a>
+                                    <a href="{% url delete_url subcategory.id %}" class="btn btn-delete btn-sm">Delete</a>
+                                </div>
+                                {% if subcategory.children.exists %}
+                                    <ul class="list-group mt-2 ms-3 nested active">
+                                        {% for child_subcategory in subcategory.children.all %}
+                                            <li class="list-group-item" data-id="{{ child_subcategory.id }}">
+                                                <span class="caret clickable caret-down">{{ child_subcategory.category }}</span>
+                                                <div class="d-flex justify-content-between align-items-center">
+                                                    <a href="{% url update_url child_subcategory.id %}" class="btn btn-update btn-sm">Update</a>
+                                                    <a href="{% url delete_url child_subcategory.id %}" class="btn btn-delete btn-sm">Delete</a>
+                                                </div>
+                                                {% if child_subcategory.children.exists %}
+                                                    <ul class="list-group mt-2 ms-3 nested active">
+                                                        {% for grandchild_subcategory in child_subcategory.children.all %}
+                                                            <li class="list-group-item" data-id="{{ grandchild_subcategory.id }}">
+                                                                <span class="caret clickable caret-down">{{ grandchild_subcategory.category }}</span>
+                                                                <div class="d-flex justify-content-between align-items-center">
+                                                                    <a href="{% url update_url grandchild_subcategory.id %}" class="btn btn-update btn-sm">Update</a>
+                                                                    <a href="{% url delete_url grandchild_subcategory.id %}" class="btn btn-delete btn-sm">Delete</a>
+                                                                </div>
+                                                            </li>
+                                                        {% endfor %}
+                                                    </ul>
+                                                {% endif %}
+                                            </li>
+                                        {% endfor %}
+                                    </ul>
+                                {% endif %}
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
+            </li>
+        {% endfor %}
+    </ul>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        var toggler = document.getElementsByClassName("caret");
+        for (var i = 0; i < toggler.length; i++) {
+            toggler[i].addEventListener("click", function() {
+                var nested = this.parentElement.querySelector(".nested");
+                if (nested) {
+                    nested.classList.toggle("active");
+                    this.classList.toggle("caret-down");
+                }
+            });
+        }
+
+        var clickableItems = document.getElementsByClassName("clickable");
+        for (var j = 0; j < clickableItems.length; j++) {
+            clickableItems[j].addEventListener("click", function() {
+                var parent_id = this.parentElement.dataset.id;
+                document.querySelector("#add-category-form input[name='parent']").value = parent_id;
+                document.querySelector("#add-category-form input[name='category']").focus();
+                
+                // Resaltar la categoría seleccionada
+                var highlightedItems = document.getElementsByClassName("highlight");
+                while (highlightedItems.length) {
+                    highlightedItems[0].classList.remove("highlight");
+                }
+                this.parentElement.classList.add("highlight");
+            });
+        }
+    });
+</script>
+{% endblock %}

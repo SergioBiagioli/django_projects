@@ -1,0 +1,81 @@
+/* static/css/styles.css */
+
+.btn-update {
+    background-color: #7da0aa !important;
+    color: white !important;
+    width: 60px !important;
+    text-align: center !important;
+}
+
+.btn-delete {
+    background-color: #b4424e !important;
+    color: white !important;
+    width: 60px !important;
+    text-align: center !important;
+}
+
+.centered-form {
+    max-width: 600px; /* Establece el ancho máximo deseado */
+    margin: 0 auto; /* Centra el formulario horizontalmente */
+}
+
+.table-responsive {
+    max-height: 300px !important; /* Altura máxima de la tabla */
+    overflow-y: auto !important; /* Barra de scroll vertical */
+    display: block !important; /* Hace que el contenedor de la tabla sea un bloque */
+    width: 100% !important; /* Asegura que la tabla tome todo el ancho disponible */
+}
+
+.category-tree ul {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+}
+
+.category-tree ul ul {
+    margin-left: 20px;
+    padding-left: 20px;
+    border-left: 1px solid #ccc;
+}
+
+.category-tree li {
+    margin: 5px 0;
+    padding: 5px;
+    position: relative;
+}
+
+.category-tree .caret {
+    cursor: pointer;
+    user-select: none;
+}
+
+.category-tree .caret::before {
+    content: "\25B6";
+    display: inline-block;
+    margin-right: 6px;
+    transition: transform 0.3s;
+}
+
+.category-tree .caret-down::before {
+    transform: rotate(90deg);
+}
+
+.category-tree .nested {
+    display: none;
+}
+
+.category-tree .active {
+    display: block;
+}
+
+.highlight {
+    background-color: #ffeb3b;
+}
+
+
+
+/* Estilos para el carrusel de imágenes */
+.carousel-inner img {
+    max-height: 100px;
+    object-fit: cover;
+}

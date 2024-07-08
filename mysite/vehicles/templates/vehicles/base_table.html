@@ -1,0 +1,29 @@
+{% extends 'vehicles/base_table_sin_form.html' %}
+{% load static %}
+{% load crispy_forms_tags %}
+{% load vehicles_extras %}
+
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="col-md-7">
+            {% block table_content %}
+                {% include "vehicles/base_table_sin_form.html"%}
+            {% endblock table_content %}
+        </div>
+        <div class="col-md-5">
+            <h2>Add a {{ title }}</h2>
+            <form action="{% url create_url %}" method="post" class="centered-form">
+                {% csrf_token %}
+                <table>
+                    {{ form|crispy }}
+                </table>
+                <input type="submit" value="Submit" class="btn btn-primary mt-3">
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock content %}
+
+
+<!-- addasda -->

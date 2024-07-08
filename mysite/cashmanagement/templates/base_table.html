@@ -1,0 +1,115 @@
+{% load static %}
+{% load crispy_forms_tags %}
+{% load vehicles_extras %}
+
+{% block content %}
+<style>
+    .centered-form {
+        max-width: 600px; 
+        margin: 0 auto;
+    }
+    .table-responsive {
+        max-height: 300px !important;
+        overflow-y: auto !important;
+        display: block !important;
+        width: 100% !important;
+    }
+    .btn-update {
+        background-color: #7da0aa !important;
+        color: white !important;
+        width: 60px !important;
+        text-align: center !important;
+    }
+    .btn-delete {
+        background-color: #b4424e !important;
+        color: white !important;
+        width: 60px !important;
+        text-align: center !important;
+    }
+    .clickable-row {
+        cursor: pointer;
+    }
+</style>
+
+<div class="row">
+    <div class="col-md-7">
+        <h1>{{ title }} List <h5>
+    </h1>
+
+        <input id="search_here" class='form-control mb-3 mt-3' placeholder="type here to search.." />
+
+        <div id="results">
+            {% if object_list %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            {% for header in headers %}
+                            <th>{{ header }}</th>
+                            {% endfor %}
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="table-body">
+                        {% for obj in object_list %}
+                        <tr class="{% if title == 'Aplication' %}clickable-row{% endif %}" data-href="{% if title == 'Aplication' %}{% url 'vehicles:aplication_detail' obj.id %}{% endif %}">
+                            {% for field in fields %}
+                            <td>{{ obj|get_field:field }}</td>
+                            {% endfor %}
+                            <td>
+                                <a href="{% url update_url obj.id %}" class="btn btn-update btn-sm">Update</a>
+                                <a href="{% url delete_url obj.id %}" class="btn btn-delete btn-sm">Delete</a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+                <p>There are no {{ title }} in the library.</p>
+            {% endif %}
+        </div>
+    </div>
+    <div class="col-md-5">
+        <h2>Add a {{ title }}</h2>
+        <form action="{% url create_url %}" method="post" class="centered-form">
+            {% csrf_token %}
+            <table>
+                {{ form|crispy }}
+            </table>
+            <input type="submit" value="Submit">
+        </form>
+    </div>
+</div>
+
+{% block extra_content %}
+{% endblock extra_content %}
+
+{% endblock %}
+
+{% block scripts %}
+<script src="{% static 'js/search_table.js' %}"></script>
+<script>
+    console.log('{{ object_list_json|escapejs }}');
+    const data = JSON.parse('{{ object_list_json|escapejs }}');
+    const headers = JSON.parse('{{ headers_json|escapejs }}');
+    const fields = JSON.parse('{{ fields_json|escapejs }}');
+    const title = '{{ title }}';
+    const updateUrlTemplate = '{% url update_url 99999 %}';
+    const deleteUrlTemplate = '{% url delete_url 99999 %}';
+    
+    initSearchTable(data, headers, fields, title, updateUrlTemplate, deleteUrlTemplate);
+
+    document.addEventListener("DOMContentLoaded", () => {
+        const rows = document.querySelectorAll(".clickable-row");
+        rows.forEach(row => {
+            row.addEventListener("click", () => {
+                const href = row.dataset.href;
+                if (href) {
+                    window.location.href = href;
+                }
+            });
+        });
+    });
+</script>
+{% endblock scripts %}

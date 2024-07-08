@@ -1,0 +1,57 @@
+{% extends "base_bootstrap.html" %}
+
+{% block content %}
+  <h1>Auto List</h1>
+  {% if auto_list %}
+  <table class="table table-hover">
+    <thead>
+      <tr>
+        <th>Nickname</th>
+        <th>Make</th>
+        <th>Comments</th>
+        <th>Mileage</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for auto in auto_list %}
+      <tr class="auto-row" data-href="{% url 'autos:auto_update' auto.id %}">
+        <td>{{ auto.nickname }}</td>
+        <td>{{ auto.make }}</td>
+        <td>{{ auto.comments }}</td>
+        <td>{{ auto.mileage }} miles</td>
+        <td>
+          <a href="{% url 'autos:auto_update' auto.id %}">Update</a> |
+          <a href="{% url 'autos:auto_delete' auto.id %}">Delete</a>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+    <p>There are no autos in the library.</p>
+  {% endif %}
+  <p>
+    {% if make_count > 0 %}
+      <a href="{% url 'autos:auto_create' %}">Add an auto</a>
+    {% else %}
+      Please add a make before you add an auto.
+    {% endif %}
+  </p>
+  <p>
+    <a href="{% url 'autos:make_list' %}">View makes</a> ({{ make_count }}) |
+    <a href="{% url 'autos:make_create' %}">Add a make</a>
+  </p>
+{% endblock %}
+
+{% block extracss %}
+  <style>
+    .auto-row:hover {
+      background-color: #f5f5f5;
+      cursor: pointer;
+    }
+  </style>
+{% endblock %}
+
+
+
