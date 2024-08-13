@@ -53,15 +53,12 @@ urlpatterns = [
     path("part/<int:pk>/delete/", views.PartDelete.as_view(), name="part_delete"),
     path('aplication/<int:pk>/', views.PartDelete.as_view(), name="part_detail"), #queda pendiente agregar la pagina de part_detail
 
-    # Property CRUD
-    path("property/", views.PropertyView.as_view(), name="property_list"),
-    path("property/create/", views.PropertyCreate.as_view(), name="property_create"),
-    path("property/<int:pk>/update/", views.PropertyUpdate.as_view(), name="property_update"),
-    path("property/<int:pk>/delete/", views.PropertyDelete.as_view(), name="property_delete"),
-   
-    #Category - Property CRUD
-    path("catproperty/", views.CatPropertyView.as_view(), name="catproperty_list"),
-    path("catproperty/create/", views.CatPropertyCreate.as_view(), name="catproperty_create"),
-    path("catproperty/<int:pk>/update/", views.CatPropertyUpdate.as_view(), name="catproperty_update"),
-    path("catproperty/<int:pk>/delete/", views.CatPropertyDelete.as_view(), name="catproperty_delete"),
+    #-------------------------------------------URLS para modelo "Property" obsoleto-----------------------------------------------
+    # # Property CRUD
+    # path("property/", views.PropertyView.as_view(), name="property_list"),
+    # path("property/create/", views.PropertyCreate.as_view(), name="property_create"),
+    # path("property/<int:pk>/update/", views.PropertyUpdate.as_view(), name="property_update"),
+    # path("property/<int:pk>/delete/", views.PropertyDelete.as_view(), name="property_delete"),
+    #------------------------------------------------------------------------------------------------------------------------------
+
 ]

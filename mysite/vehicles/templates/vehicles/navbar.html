@@ -11,10 +11,8 @@
           <a class="nav-link" href="{% url 'vehicles:all' %}" role="button">Vehicles</a></li>
       <li {% if request.get_full_path == x %}class="active"{% endif %}>
           <a class="nav-link" href="{% url 'vehicles:category_list' %}" role="button">Categories</a></li>
-      <li {% if request.get_full_path == x %}class="active"{% endif %}>
-          <a class="nav-link" href="{% url 'vehicles:catproperty_list' %}" role="button">Cat-Property</a></li>
-      <li {% if request.get_full_path == x %}class="active"{% endif %}>
-          <a class="nav-link" href="{% url 'vehicles:property_list' %}" role="button">Property</a></li>
+    
+        
     </ul>
     <ul class="navbar-nav">
       {% if user.is_authenticated %}

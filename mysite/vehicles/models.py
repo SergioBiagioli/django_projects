@@ -94,7 +94,9 @@ class Category(MPTTModel, BaseModel):
 
     def __str__(self):
         return self.category
-
+    
+    
+#-----------------------------------------------Modelo obsoleto----------------------------------------------------------
 # class SubCategory(MPTTModel, BaseModel):
 #     subcategory = models.CharField(
 #         max_length=200,
@@ -106,26 +108,16 @@ class Category(MPTTModel, BaseModel):
 
 #     def __str__(self):
 #         return self.subcategory
+#-----------------------------------------------Modelo obsoleto----------------------------------------------------------
+# class Property(BaseModel):
+#     name = models.CharField(
+#         max_length=100,
+#         help_text="Enter the property name (e.g. Internal Diameter, External Diameter, Material)"
+#     )
 
-class Property(BaseModel):
-    name = models.CharField(
-        max_length=100,
-        help_text="Enter the property name (e.g. Internal Diameter, External Diameter, Material)"
-    )
+#     def __str__(self):
+#         return self.name
 
-    def __str__(self):
-        return self.name
-
-class CatProperty(BaseModel):
-    category = models.ForeignKey('Category', related_name='catpropertycategory', on_delete=models.CASCADE)
-    property = models.ForeignKey(Property, related_name='part_properties', on_delete=models.CASCADE)
-    value = models.CharField(
-        max_length=200,
-        help_text="Enter the value of the property (e.g. 50mm, Steel)"
-    )
-
-    def __str__(self):
-        return f"{self.category} - {self.property.name}: {self.value}"
 
 class Part(BaseModel):
     sku = models.CharField(max_length=50, help_text="Enter de SKU", validators=[MinLengthValidator(2, "SKU must be greater than 1 character")])
@@ -145,6 +137,16 @@ class Part(BaseModel):
         
         # return f"{self.name}, {properties_str}, in {subcategories_str}-{categories_str}"
         return f"{self.name}, {properties_str}, in -{categories_str}"
+
+
+class PartProperty(BaseModel):
+    part = models.ForeignKey('Part', related_name='part', on_delete=models.CASCADE)
+    property = models.CharField(max_length=100,help_text="Enter the property name (e.g. Internal Diameter, External Diameter, Material)")
+    value = models.CharField(max_length=200,help_text="Enter the value of the property (e.g. 50mm, Steel)")
+
+    def __str__(self):
+        return f"{self.part} - {self.property}: {self.value}"
+    
 
 
 @receiver(pre_save, sender=BaseModel)

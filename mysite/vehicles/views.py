@@ -4,8 +4,8 @@ from django.views import View
 from django.views.generic.edit import CreateView, UpdateView, DeleteView, FormView
 from django.views.generic import DetailView
 from django.urls import reverse_lazy
-from .forms import MakeForm, YearForm, ModelForm, SegmentForm, CategoryForm, PartForm, PropertyForm, CatPropertyForm, AplicationForm, AplicationPhotoForm
-from vehicles.models import Aplication, Make, Year, Model, Segment, Category, Part, Property, CatProperty, AplicationPhoto
+from .forms import MakeForm, YearForm, ModelForm, SegmentForm, CategoryForm, PartForm, PartPropertyForm, AplicationForm, AplicationPhotoForm, PartPropertyFormSet
+from vehicles.models import Aplication, Make, Year, Model, Segment, Category, Part, PartProperty, AplicationPhoto
 from django.db.models import Q
 from django.http import JsonResponse
 from django.template.loader import render_to_string
@@ -482,20 +482,29 @@ class PartListView(LoginRequiredMixin, View):
         
         part_list = []
         for part in parts:
+            properties = PartProperty.objects.filter(part=part)
+            properties_list = []
+            for prop in properties:
+                properties_list.append({
+                    'property': prop.property,
+                    'value': prop.value
+                })
+            
             part_list.append({
                 'id': part.id,
                 'sku': part.sku,
                 'name': part.name,
                 'categories': ", ".join([cat.category for cat in part.categories.all()]),
                 'applications': " | ".join([str(app) for app in part.applications.all()]),  # Usa el método __str__
+                'properties': properties_list,
                 'description': part.description,
             })
 
         part_form = PartForm()
         ctx = {
             'title': 'Part',
-            'headers': json.dumps(['Sku','Name', 'Categories', 'Applications', 'Description']),
-            'fields': json.dumps(['sku','name', 'categories', 'applications', 'description']),
+            'headers': json.dumps(['Sku','Name', 'Categories', 'Applications', 'Property', 'Value','Description']),
+            'fields': json.dumps(['sku','name', 'categories', 'applications', 'properties', 'description']),
             'object_list_json': json.dumps(part_list),
             'object_list': parts,
             'form': part_form,
@@ -505,161 +514,143 @@ class PartListView(LoginRequiredMixin, View):
         }
         return render(request, 'vehicles/part_list.html', ctx)
 
-class PartCreate(LoginRequiredMixin, CreateView):
-    model = Part
-    form_class = PartForm
-    success_url = reverse_lazy('vehicles:part_list')
 
-    def form_valid(self, form):
-        form.instance.created_by = self.request.user
-        form.instance.updated_by = self.request.user
-        return super().form_valid(form)
+class PartCreate(LoginRequiredMixin, View):
+    def get(self, request):
+        part_form = PartForm()
+        part_property_formset = PartPropertyFormSet(queryset=PartProperty.objects.none())
+        ctx = {
+            'part_form': part_form,
+            'part_property_formset': part_property_formset,
+        }
+        return render(request, 'vehicles/part_form.html', ctx)
 
-class PartUpdate(LoginRequiredMixin, UpdateView):
-    model = Part
-    form_class = PartForm
-    success_url = reverse_lazy('vehicles:part_list')
-    template_name = 'vehicles/update_form_partial.html'
+    def post(self, request):
+        part_form = PartForm(request.POST)
+        part_property_formset = PartPropertyFormSet(request.POST)
+        if part_form.is_valid() and part_property_formset.is_valid():
+            part = part_form.save(commit=False)
+            part.created_by = request.user
+            part.updated_by = request.user
+            part.save()
 
-    def form_valid(self, form):
-        form.instance.updated_by = self.request.user
-        return super().form_valid(form)
+            # Guardar el formset
+            part_properties = part_property_formset.save(commit=False)
+            for property in part_properties:
+                property.part = part
+                property.save()
+            return redirect('vehicles:part_list')
+        ctx = {
+            'part_form': part_form,
+            'part_property_formset': part_property_formset,
+        }
+        return render(request, 'vehicles/part_form.html', ctx)
 
-    def get(self, request, *args, **kwargs):
-        if request.headers.get('x-requested-with') == 'XMLHttpRequest':
-            form = self.get_form()
-            context = {
-                'form': form,
-                'object': self.get_object()
-            }
-            html_form = render_to_string(self.template_name, context, request=request)
-            return JsonResponse({'html_form': html_form})
-        return super().get(request, *args, **kwargs)
+class PartUpdate(LoginRequiredMixin, View):
+    def get(self, request, pk):
+        part = get_object_or_404(Part, pk=pk)
+        part_form = PartForm(instance=part)
+        part_property_formset = PartPropertyFormSet(instance=part)
+        ctx = {
+            'part_form': part_form,
+            'part_property_formset': part_property_formset,
+        }
+        return render(request, 'vehicles/part_form.html', ctx)
+
+    def post(self, request, pk):
+        part = get_object_or_404(Part, pk=pk)
+        part_form = PartForm(request.POST, instance=part)
+        part_property_formset = PartPropertyFormSet(request.POST, instance=part)
+        if part_form.is_valid() and part_property_formset.is_valid():
+            part = part_form.save(commit=False)
+            part.updated_by = request.user
+            part.save()
+
+            # Guardar el formset
+            part_properties = part_property_formset.save(commit=False)
+            for property in part_properties:
+                property.part = part
+                property.save()
+            return redirect('vehicles:part_list')
+        ctx = {
+            'part_form': part_form,
+            'part_property_formset': part_property_formset,
+        }
+        return render(request, 'vehicles/part_form.html', ctx)
+
 
 
 class PartDelete(LoginRequiredMixin, DeleteView):
     model = Part
     success_url = reverse_lazy('vehicles:part_list')
 
-# CRUD Views for PROPERTIES
-class PropertyView(LoginRequiredMixin, View):
-    def get(self, request):
-        properties = Property.objects.all().order_by('name')
-        property_list = []
-        for property in properties:
-            property_list.append({
-                'id': property.id,
-                'created_at': property.created_at.isoformat(),
-                'updated_at': property.updated_at.isoformat(),
-                'created_by_id': property.created_by_id,
-                'updated_by_id': property.updated_by_id,
-                'property': property.name,
-            })
-        property_form = PropertyForm()
-        ctx = {
-            'title': 'Property',
-            'headers': json.dumps(['Property']),
-            'fields': json.dumps(['property']),
-            'object_list_json': json.dumps(property_list),
-            'object_list': properties,
-            'form': property_form,
-            'return_url': 'vehicles:all',
-            'create_url': 'vehicles:property_create',
-            'update_url': 'vehicles:property_update',
-            'delete_url': 'vehicles:property_delete',
-        }
-        return render(request, 'vehicles/base_table_list.html', ctx)
 
-class PropertyCreate(LoginRequiredMixin, CreateView):
-    model = Property
-    form_class = PropertyForm
-    success_url = reverse_lazy('vehicles:property_list')
-
-    def form_valid(self, form):
-        form.instance.created_by = self.request.user
-        form.instance.updated_by = self.request.user
-        return super().form_valid(form)
-
-class PropertyUpdate(LoginRequiredMixin, UpdateView):
-    model = Property
-    form_class = PropertyForm
-    success_url = reverse_lazy('vehicles:property_list')
-    template_name = 'vehicles/update_form_partial.html'
-
-    def form_valid(self, form):
-        form.instance.updated_by = self.request.user
-        return super().form_valid(form)
-
-    def get(self, request, *args, **kwargs):
-        if request.headers.get('x-requested-with') == 'XMLHttpRequest':
-            form = self.get_form()
-            context = {
-                'form': form,
-                'object': self.get_object()
-            }
-            html_form = render_to_string(self.template_name, context, request=request)
-            return JsonResponse({'html_form': html_form})
-        return super().get(request, *args, **kwargs)
-
-class PropertyDelete(LoginRequiredMixin, DeleteView):
-    model = Property
-    success_url = reverse_lazy('vehicles:property_list')
-
-# CRUD Views for PARTPROPERTIES
-
-class CatPropertyView(LoginRequiredMixin, View):
-    def get(self, request):
-        categories = Category.objects.filter(parent=None).prefetch_related('children', 'catpropertycategory__property').order_by('category')
-        properties = Property.objects.all()
-        catproperty_form = CatPropertyForm()
-        ctx = {
-            'title': 'Part-Property',
-            'categories': categories,
-            'properties': properties,
-            'form': catproperty_form,
-            'create_url': 'vehicles:catproperty_create',
-            'update_url': 'vehicles:catproperty_update',
-            'delete_url': 'vehicles:catproperty_delete',
-        }
-        return render(request, 'vehicles/catproperty_list.html', ctx)
-
-    def post(self, request):
-        form = CatPropertyForm(request.POST)
-        if form.is_valid():
-            form.save()
-            return redirect('vehicles:catproperty_list')
-        else:
-            categories = Category.objects.filter(parent=None).prefetch_related('children', 'catpropertycategory__property').order_by('category')
-            properties = Property.objects.all()
-            ctx = {
-                'title': 'Part-Property',
-                'categories': categories,
-                'properties': properties,
-                'form': form,
-                'create_url': 'vehicles:catproperty_create',
-                'update_url': 'vehicles:catproperty_update',
-                'delete_url': 'vehicles:catproperty_delete',
-            }
-            return render(request, 'vehicles/catproperty_list.html', ctx)
+# ---------------------------------------- View de properties obsoletos"---------------------------
+# # CRUD Views for PROPERTIES
+# class PropertyView(LoginRequiredMixin, View):
+#     def get(self, request):
+#         properties = Property.objects.all().order_by('name')
+#         property_list = []
+#         for property in properties:
+#             property_list.append({
+#                 'id': property.id,
+#                 'created_at': property.created_at.isoformat(),
+#                 'updated_at': property.updated_at.isoformat(),
+#                 'created_by_id': property.created_by_id,
+#                 'updated_by_id': property.updated_by_id,
+#                 'property': property.name,
+#             })
+#         property_form = PropertyForm()
+#         ctx = {
+#             'title': 'Property',
+#             'headers': json.dumps(['Property']),
+#             'fields': json.dumps(['property']),
+#             'object_list_json': json.dumps(property_list),
+#             'object_list': properties,
+#             'form': property_form,
+#             'return_url': 'vehicles:all',
+#             'create_url': 'vehicles:property_create',
+#             'update_url': 'vehicles:property_update',
+#             'delete_url': 'vehicles:property_delete',
+#         }
+#         return render(request, 'vehicles/base_table_list.html', ctx)
 
 
+#-----------------------VIEW de modelo "Property" Obsoleto--------------------------
+# class PropertyCreate(LoginRequiredMixin, CreateView):
+#     model = Property
+#     form_class = PropertyForm
+#     success_url = reverse_lazy('vehicles:property_list')
+
+#     def form_valid(self, form):
+#         form.instance.created_by = self.request.user
+#         form.instance.updated_by = self.request.user
+#         return super().form_valid(form)
+
+# class PropertyUpdate(LoginRequiredMixin, UpdateView):
+#     model = Property
+#     form_class = PropertyForm
+#     success_url = reverse_lazy('vehicles:property_list')
+#     template_name = 'vehicles/update_form_partial.html'
+
+#     def form_valid(self, form):
+#         form.instance.updated_by = self.request.user
+#         return super().form_valid(form)
+
+#     def get(self, request, *args, **kwargs):
+#         if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+#             form = self.get_form()
+#             context = {
+#                 'form': form,
+#                 'object': self.get_object()
+#             }
+#             html_form = render_to_string(self.template_name, context, request=request)
+#             return JsonResponse({'html_form': html_form})
+#         return super().get(request, *args, **kwargs)
+
+# class PropertyDelete(LoginRequiredMixin, DeleteView):
+#     model = Property
+#     success_url = reverse_lazy('vehicles:property_list')
+#---------------------------------------------------------------------------------------------------------
 
 
-
-
-class CatPropertyCreate(LoginRequiredMixin, CreateView):
-    model = CatProperty
-    form_class = CatPropertyForm
-    template_name = 'vehicles/catproperty_form.html'
-    success_url = reverse_lazy('vehicles:catproperty_list')
-
-class CatPropertyUpdate(LoginRequiredMixin, UpdateView):
-    model = CatProperty
-    form_class = CatPropertyForm
-    template_name = 'vehicles/catproperty_form.html'
-    success_url = reverse_lazy('vehicles:catproperty_list')
-
-class CatPropertyDelete(LoginRequiredMixin, DeleteView):
-    model = CatProperty
-    template_name = 'vehicles/catproperty_confirm_delete.html'
-    success_url = reverse_lazy('vehicles:catproperty_list')

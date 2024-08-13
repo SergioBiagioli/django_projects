@@ -12,8 +12,22 @@
 
 <form action="" method="post" class="centered-form">
     {% csrf_token %}
-    {{ form|crispy }}
-    <input type="submit" value="Submit">
-    <input type="button" onclick="window.location='{% url 'vehicles:part_list' %}' ; return false;" value="Cancel">
+    
+    <!-- Formulario de la parte -->
+    {{ part_form|crispy }}
+
+    <!-- Formulario de propiedades -->
+    <h3>Properties</h3>
+    {{ part_property_formset.management_form }}
+    {% for form in part_property_formset %}
+        <div class="property-form">
+            {{ form|crispy }}
+        </div>
+    {% endfor %}
+
+    <!-- Botones de acción -->
+    <input type="submit" value="Save" class="btn btn-primary">
+    <input type="button" onclick="window.location='{% url 'vehicles:part_list' %}'; return false;" value="Cancel" class="btn btn-secondary">
 </form>
+
 {% endblock %}

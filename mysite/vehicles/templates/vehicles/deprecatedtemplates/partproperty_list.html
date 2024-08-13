@@ -76,7 +76,7 @@
 
 <div class="row">
     <div class="col-md-13">">
-        <form id="add-catproperty-form" action="{% url create_url %}" method="post" class="mb-4">
+        <form id="add-partproperty-form" action="{% url create_url %}" method="post" class="mb-4">
             {% csrf_token %}
             <div class="form-group">
                 <input type="hidden" name="category" id="category-id" value="">
@@ -124,7 +124,7 @@
             clickableItems[j].addEventListener("click", function() {
                 var categoryId = this.parentElement.dataset.id;
                 document.querySelector("#category-id").value = categoryId;
-                document.querySelector("#add-catproperty-form input[name='value']").focus();
+                document.querySelector("#add-partproperty-form input[name='value']").focus();
                 
                 // Resaltar la categoría seleccionada
                 var highlightedItems = document.getElementsByClassName("highlight");

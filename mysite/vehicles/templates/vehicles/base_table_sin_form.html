@@ -64,7 +64,15 @@
                         {% for obj in object_list %}
                         <tr class="{% if title == 'Aplication' or title == 'Part' %}clickable-row{% endif %}" data-href="{% if title == 'Aplication' %}{% url 'vehicles:aplication_detail' obj.id %}{% elif title == 'Part' %}{% url 'vehicles:part_detail' obj.id %}{% endif %}">
                             {% for field in fields %}
-                            <td>{{ obj|get_field:field }}</td>
+                                {% if field == "properties" %}
+                                    <td>
+                                        {% for prop in obj.properties %}
+                                            {{ prop.property }}: {{ prop.value }}<br>
+                                        {% endfor %}
+                                    </td>
+                                {% else %}
+                                    <td>{{ obj|get_field:field }}</td>
+                                {% endif %}
                             {% endfor %}
                             <td class="action-buttons">
                                 <button type="button" class="btn btn-update btn-sm" data-bs-toggle="modal" data-bs-target="#updateModalTemplate" data-url="{% url update_url obj.id %}">Update</button>
