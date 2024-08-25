@@ -1,0 +1,32 @@
+{% extends "base_menu.html" %}
+
+{% block content %}
+{% load crispy_forms_tags %}
+
+<style>
+    .centered-form {
+        max-width: 600px; /* Establece el ancho máximo deseado */
+        margin: 0 auto; /* Centra el formulario horizontalmente */
+    }
+</style>
+
+<h1> Welcome to Homework TimeCode_1391 </h1>
+
+{% if result %}
+    <h2>Your result is {{ result }}</h2>
+{% endif %}
+
+<p>
+<div>
+    <form method="post">
+        {% csrf_token %}
+        Field1: <input type="text" name="campo1" placeholder="Escribir campo 1..."><br>
+        Field2: <input type="text" name="campo2" placeholder="Escribir campo 2..."><br>
+        <button type="submit">Submit</button>
+        <button type="button" onclick="window.location.href='{% url 'login' %}?next={{ request.path }}'">Login</button>
+    
+    </form>
+    <br>    
+</div>
+</p>
+{% endblock %}

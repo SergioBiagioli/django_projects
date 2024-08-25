@@ -129,6 +129,7 @@ class Part(BaseModel):
     categories = models.ManyToManyField(Category, related_name='parts')
     applications = models.ManyToManyField(Aplication, related_name='parts')
     description = models.TextField(blank=True, null=True)
+    notes = models.TextField(blank=True, null=True)
 
     def __str__(self):
         categories_str = ' > '.join([cat.name for cat in self.categories.all()])

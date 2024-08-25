@@ -15,6 +15,7 @@ urlpatterns = [
     path('searchbar/', include('searchbar.urls')),
     path('accounts/', include('django.contrib.auth.urls')),
     path('cashmanagement/', include('cashmanagement.urls')),
+    path('newapp/', include('newapp.urls')),
     re_path(r'^oauth/', include('social_django.urls', namespace='social')),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 

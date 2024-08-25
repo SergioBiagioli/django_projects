@@ -31,6 +31,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'django.contrib.humanize',
     'cashmanagement',
+    'newapp',
 
     # Extensions - installed with requirements.txt
     'django_extensions',
