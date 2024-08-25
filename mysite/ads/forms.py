@@ -9,18 +9,13 @@ class CreateForm(forms.ModelForm):
     max_upload_limit = 2 * 1024 * 1024
     max_upload_limit_text = naturalsize(max_upload_limit)
 
-    # Call this 'picture' so it gets copied from the form to the in-memory model
-    # It will not be the "bytes", it will be the "InMemoryUploadedFile"
-    # because we need to pull out things like content_type
     picture = forms.FileField(required=False, label='File to Upload <= '+max_upload_limit_text)
     upload_field_name = 'picture'
 
-    # Hint: this will need to be changed for use in the ads application :)
     class Meta:
         model = Ad
-        fields = ['title', 'text', 'picture', 'price']  # Picture is manual
+        fields = ['title', 'text', 'tags', 'picture', 'price']  # Picture is manual
 
-    # Validate the size of the picture
     def clean(self):
         cleaned_data = super().clean()
         pic = cleaned_data.get('picture')
@@ -29,19 +24,20 @@ class CreateForm(forms.ModelForm):
         if len(pic) > self.max_upload_limit:
             self.add_error('picture', "File must be < "+self.max_upload_limit_text+" bytes")
 
-    # Convert uploaded File object to a picture
     def save(self, commit=True):
+        # Guardamos la instancia del objeto sin los many-to-many fields
         instance = super(CreateForm, self).save(commit=False)
 
-        # We only need to adjust picture if it is a freshly uploaded file
-        f = instance.picture   # Make a copy
-        if isinstance(f, InMemoryUploadedFile):  # Extract data from the form to the model
+        # Procesamiento de la imagen
+        f = instance.picture   # Hacemos una copia
+        if isinstance(f, InMemoryUploadedFile):
             bytearr = f.read()
             instance.content_type = f.content_type
-            instance.picture = bytearr  # Overwrite with the actual image data
+            instance.picture = bytearr
 
         if commit:
-            instance.save()
+            instance.save()  # Guardamos la instancia en la base de datos
+            self.save_m2m()  # Ahora guardamos las relaciones many-to-many (como los tags)
 
         return instance
     

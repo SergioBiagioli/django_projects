@@ -48,6 +48,14 @@
 {{ ad.text }}
 <br>
 <h2>Price : $ {{ ad.price }}</h2>
+
+{% if ad.tags.exists %}
+<p>Tags: 
+    {% for tag in ad.tags.all %}
+    <span style="border:1px grey solid; background-color: LightGreen;"> {{ tag }} </span>
+    {% endfor %}
+</p>
+{% endif %}
 </p>
 
 
@@ -60,7 +68,6 @@
     {% csrf_token %}
     {{ comment_form|crispy }}
 <input type="submit" value="Submit">
-<input type="submit" value="All Ads" onclick="window.location.href='{% url 'ads:all' %}';return false;">
 </form>
 </p>
 {% endif %}

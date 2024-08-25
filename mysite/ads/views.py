@@ -6,6 +6,10 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse_lazy, reverse
 from django.http import HttpResponse
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.humanize.templatetags.humanize import naturaltime
+
+from django.db.models import Q
+
 
 
 class AdListView(OwnerListView):
@@ -13,6 +17,32 @@ class AdListView(OwnerListView):
     # By convention:
     template_name = "ads/ad_list.html"
 
+class AdSearchView(View):
+    model = Ad
+    template_name = "ads/ad_list.html"
+
+    def get(self, request):
+        strval = request.GET.get('search', False)
+        if strval:
+            #Simple title-only search
+            #objects  = Ad.objects.filter(title__contains=strval).select_related().order_by('-updated_at')[:10]
+
+            #Multi Field search
+            query = Q(title__icontains=strval)
+            query.add(Q(text__icontains=strval), Q.OR)
+            query.add(Q(tags__name__icontains=strval), Q.OR)
+            objects = Ad.objects.filter(query).select_related().order_by('-updated_at')[:10]
+
+        else:
+            objects = Ad.objects.all().select_related().order_by('-updated_at')[:10]
+
+        for obj in objects:
+            obj.natural_updated = naturaltime(obj.updated_at)
+
+        ctx = {'ad_list': objects, 'search': strval}
+        retval = render(request, self.template_name, ctx)
+
+        return retval
 
 class AdDetailView(OwnerDetailView):
     model = Ad
@@ -44,6 +74,8 @@ class AdCreateView(LoginRequiredMixin, View):
         ad = form.save(commit=False)
         ad.owner = self.request.user
         ad.save()
+
+        form.save_m2m()
         return redirect(self.success_url)
 
 class AdUpdateView(LoginRequiredMixin, View):
@@ -66,7 +98,7 @@ class AdUpdateView(LoginRequiredMixin, View):
 
         pic = form.save(commit=False)
         pic.save()
-
+        form.save_m2m()
         return redirect(self.success_url)
 
 

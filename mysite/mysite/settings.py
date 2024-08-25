@@ -16,7 +16,9 @@ SECRET_KEY = 'g$iqqu&*mw4_sg3(#ld0sqaalxebel&168^yj%i&sgrw(fmn@w'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = ['fa2b-2803-9800-b445-811a-989d-c5a1-6444-7733.ngrok-free.app', 'localhost', '127.0.0.1', '*']
+
+
 
 # Application definition
 
@@ -58,6 +60,11 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'social_django.middleware.SocialAuthExceptionMiddleware',  # Add
 ]
+
+TAGGIT_CASE_INSENSITIVE = True
+# SECURE_SSL_REDIRECT = True
+CSRF_COOKIE_SECURE = True
+
 
 ROOT_URLCONF = 'mysite.urls'
 
