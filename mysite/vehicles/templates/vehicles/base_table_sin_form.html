@@ -9,7 +9,14 @@
         margin: 0 auto;
     }
     .table-responsive {
-        max-height: 300px !important;
+        max-height: 600px !important;
+        overflow: auto !important;
+        display: block !important;
+        width: 100% !important;
+    }
+
+    .application-responsive {
+        max-height: 100px !important;
         overflow: auto !important;
         display: block !important;
         width: 100% !important;
@@ -43,10 +50,14 @@
 
 <div class="row">
     <div class="col-md-12">
-        <h1>{{ title }} List <h5>
-        </h1>
+        <h1>{{ title }} List</h1>
 
-        <input id="search_here" class='form-control mb-3 mt-3' placeholder="type here to search.." />
+        <form method="get" action="">
+            <div class="input-group mb-3 mt-3">
+                <input type="text" id="search_here" name="search_here" class="form-control" placeholder="Search here..." value="{{ search_here }}">
+                <button type="submit" class="btn btn-primary"><i class="fa fa-search"></i></button>
+            </div>
+        </form>
 
         <div id="results">
             {% if object_list %}
@@ -62,13 +73,27 @@
                     </thead>
                     <tbody id="table-body">
                         {% for obj in object_list %}
-                        <tr class="{% if title == 'Aplication' or title == 'Part' %}clickable-row{% endif %}" data-href="{% if title == 'Aplication' %}{% url 'vehicles:aplication_detail' obj.id %}{% elif title == 'Part' %}{% url 'vehicles:part_detail' obj.id %}{% endif %}">
+                        <tr class="{% if title == 'Aplication' %}clickable-row{% endif %}" data-href="{% if title == 'Aplication' %}{% url 'vehicles:aplication_detail' obj.id %}{% endif %}">
                             {% for field in fields %}
                                 {% if field == "properties" %}
                                     <td>
-                                        {% for prop in obj.properties %}
-                                            {{ prop.property }}: {{ prop.value }}<br>
+                                        {% for prop in obj.properties.all %}
+                                        <b>{{ prop.property }}</b>: {{ prop.value }}<br>
                                         {% endfor %}
+                                    </td>
+                                {% elif field == "categories" %}
+                                    <td>
+                                        {% for category in obj.categories.all %}
+                                        {{ category.category }}{% if not forloop.last %}, {% endif %}
+                                        {% endfor %}
+                                    </td>
+                                {% elif field == "applications" %}
+                                    <td>
+                                        <div class="application-responsive">   
+                                        {% for app in obj.applications.all %}
+                                        {{ app }}{% if not forloop.last %} | {% endif %}
+                                        {% endfor %}
+                                    </div>
                                     </td>
                                 {% else %}
                                     <td>{{ obj|get_field:field }}</td>
@@ -86,6 +111,34 @@
             {% else %}
                 <p>There are no {{ title }} in the library.</p>
             {% endif %}
+
+            <!-- Paginación -->
+            <nav aria-label="Page navigation example">
+                <ul class="pagination">
+                    {% if page_obj.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?search_here={{ search_here }}&page={{ page_obj.previous_page_number }}" aria-label="Previous">
+                            <span aria-hidden="true">&laquo;</span>
+                        </a>
+                    </li>
+                    {% endif %}
+
+                    {% for num in page_obj.paginator.page_range %}
+                    <li class="page-item {% if page_obj.number == num %}active{% endif %}">
+                        <a class="page-link" href="?search_here={{ search_here }}&page={{ num }}">{{ num }}</a>
+                    </li>
+                    {% endfor %}
+
+                    {% if page_obj.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?search_here={{ search_here }}&page={{ page_obj.next_page_number }}" aria-label="Next">
+                            <span aria-hidden="true">&raquo;</span>
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+            <!-- Fin de Paginación -->
         </div>
     </div>
 </div>

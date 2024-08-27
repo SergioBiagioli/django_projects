@@ -11,6 +11,11 @@ from django.http import JsonResponse
 from django.template.loader import render_to_string
 import json
 from datetime import datetime
+from django.db.models import Q
+from django.core.paginator import Paginator
+
+
+
 
 class MainView(LoginRequiredMixin, View):
     def get(self, request):
@@ -18,8 +23,7 @@ class MainView(LoginRequiredMixin, View):
         yc = Year.objects.count()
         mlc = Model.objects.count()
         sg = Segment.objects.count()
-        al = Aplication.objects.all()
-
+        al = Aplication.objects.all().order_by('-updated_at')[:10]
         aplication_list = []
         for aplication in al:
             aplication_list.append({
@@ -476,41 +480,54 @@ class CategoryDelete(LoginRequiredMixin, DeleteView):
     success_url = reverse_lazy('vehicles:category_list')
 
 # CRUD Views for PARTS
+
+
+from django.db.models import Q
+from django.views import View
+from django.contrib.auth.mixins import LoginRequiredMixin
+from .models import Part
+from .forms import PartForm
+
 class PartListView(LoginRequiredMixin, View):
+    
     def get(self, request):
-        parts = Part.objects.all()
+        strval = request.GET.get('search_here', '')
         
-        part_list = []
-        for part in parts:
-            properties = PartProperty.objects.filter(part=part)
-            properties_list = []
-            for prop in properties:
-                properties_list.append({
-                    'property': prop.property,
-                    'value': prop.value
-                })
-            
-            part_list.append({
-                'id': part.id,
-                'sku': part.sku,
-                'name': part.name,
-                'categories': ", ".join([cat.category for cat in part.categories.all()]),
-                'applications': " | ".join([str(app) for app in part.applications.all()]),  # Usa el método __str__
-                'properties': properties_list,
-                'description': part.description,
-            })
+        if strval:
+            query = Q(sku__icontains=strval)  # Búsqueda en el campo SKU de Part
+            query.add(Q(name__icontains=strval), Q.OR)  # Búsqueda en el campo Name de Part
+            query.add(Q(categories__category__icontains=strval), Q.OR)
+            query.add(Q(applications__segment__segment__icontains=strval), Q.OR)
+            query.add(Q(applications__make__make__icontains=strval), Q.OR)
+            query.add(Q(applications__year__year__icontains=strval), Q.OR)
+            query.add(Q(applications__model__model__icontains=strval), Q.OR)
+            query.add(Q(applications__market__icontains=strval), Q.OR)
+            query.add(Q(notes__icontains=strval), Q.OR)
+
+            parts = Part.objects.filter(query).select_related(
+            'categories', 'applications__segment', 'applications__make',
+            'applications__year', 'applications__model'
+        ).prefetch_related('categories', 'applications').distinct().order_by('-updated_at')
+        else:
+            parts = Part.objects.all().order_by('-updated_at')[:10]
+
+        paginator = Paginator(parts, 10)
+        page_number = request.GET.get('page')
+        page_obj = paginator.get_page(page_number)
+
 
         part_form = PartForm()
         ctx = {
             'title': 'Part',
-            'headers': json.dumps(['Sku','Name', 'Categories', 'Applications', 'Property', 'Value','Description']),
-            'fields': json.dumps(['sku','name', 'categories', 'applications', 'properties', 'description']),
-            'object_list_json': json.dumps(part_list),
-            'object_list': parts,
+            'headers': ['Sku', 'Name', 'Categories', 'Applications', 'Property', 'Notes', 'Description'],
+            'fields': ['sku', 'name', 'categories', 'applications', 'properties', 'description'],
+            'object_list': page_obj,
             'form': part_form,
+            'search_here': strval,
             'create_url': 'vehicles:part_create',
             'update_url': 'vehicles:part_update',
             'delete_url': 'vehicles:part_delete',
+            'page_obj' : page_obj,
         }
         return render(request, 'vehicles/part_list.html', ctx)
 

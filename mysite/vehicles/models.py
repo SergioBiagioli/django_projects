@@ -120,9 +120,9 @@ class Category(MPTTModel, BaseModel):
 
 
 class Part(BaseModel):
-    sku = models.CharField(max_length=50, help_text="Enter de SKU", validators=[MinLengthValidator(2, "SKU must be greater than 1 character")])
+    sku = models.CharField(max_length=50, db_index=True , help_text="Enter de SKU", validators=[MinLengthValidator(2, "SKU must be greater than 1 character")])
     name = models.CharField(
-        max_length=100,
+        max_length=100, db_index= True,
         help_text="Enter the general part name (e.g. Spark Plug)",
         validators=[MinLengthValidator(2, "Part name must be greater than 1 character")]
     )
@@ -133,20 +133,18 @@ class Part(BaseModel):
 
     def __str__(self):
         categories_str = ' > '.join([cat.name for cat in self.categories.all()])
-        # subcategories_str = ' > '.join([subcat.name for subcat in self.subcategories.all()])
-        properties_str = ', '.join([f"{prop.property.name}: {prop.value}" for prop in self.properties.all()])
-        
-        # return f"{self.name}, {properties_str}, in {subcategories_str}-{categories_str}"
-        return f"{self.name}, {properties_str}, in -{categories_str}"
+        properties_str = ', '.join([f"{prop.property}: {prop.value}" for prop in self.properties.all()])
+        return f"{self.name}, {properties_str}, in {categories_str}"
+
 
 
 class PartProperty(BaseModel):
-    part = models.ForeignKey('Part', related_name='part', on_delete=models.CASCADE)
-    property = models.CharField(max_length=100,help_text="Enter the property name (e.g. Internal Diameter, External Diameter, Material)")
-    value = models.CharField(max_length=200,help_text="Enter the value of the property (e.g. 50mm, Steel)")
+    part = models.ForeignKey('Part', related_name='properties', on_delete=models.CASCADE)
+    property = models.CharField(max_length=100, help_text="Enter the property name (e.g. Internal Diameter, External Diameter, Material)")
+    value = models.CharField(max_length=200, help_text="Enter the value of the property (e.g. 50mm, Steel)")
 
     def __str__(self):
-        return f"{self.part} - {self.property}: {self.value}"
+        return f"{self.property}: {self.value}"
     
 
 
