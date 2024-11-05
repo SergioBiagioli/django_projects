@@ -7,6 +7,14 @@
 {% endblock %}
 
 {% block content %}
+<style>
+    .left-margin-div {
+        max-width: 600px;
+        margin: auto
+    }
+</style>
+
+<div class="left-margin-div">
 <h1>{{ aplication.segment }} > {{ aplication.make }} > {{ aplication.year }} > {{ aplication.model }}</h1>
 
 <p><strong>Segment:</strong> {{ aplication.segment }}</p>
@@ -71,3 +79,4 @@
     {% endfor %}
 </ul>
 {% endblock %}
+</div>

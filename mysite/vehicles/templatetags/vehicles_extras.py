@@ -4,4 +4,10 @@ register = template.Library()
 
 @register.filter
 def get_field(obj, field_name):
-    return getattr(obj, field_name, None)
+    try:
+        value = getattr(obj, field_name)
+        if callable(value):
+            return value()
+        return value
+    except AttributeError:
+        return "N/A"

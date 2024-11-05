@@ -17,46 +17,47 @@ from django.core.paginator import Paginator
 
 
 
-class MainView(LoginRequiredMixin, View):
+class AplicationList(LoginRequiredMixin, View):
     def get(self, request):
-        mc = Make.objects.count()
-        yc = Year.objects.count()
-        mlc = Model.objects.count()
-        sg = Segment.objects.count()
-        al = Aplication.objects.all().order_by('-updated_at')[:10]
+        # Usa select_related para cargar las relaciones de manera eficiente
+        al = Aplication.objects.all().select_related('make', 'model', 'segment', 'year').order_by('-updated_at')
+        paginator = Paginator(al, 10)
+        page_number = request.GET.get('page', 1)
+        page_obj = paginator.get_page(page_number)
+
         aplication_list = []
-        for aplication in al:
+        for aplication in page_obj:
             aplication_list.append({
                 'id': aplication.id,
                 'created_at': aplication.created_at.isoformat(),
                 'updated_at': aplication.updated_at.isoformat(),
                 'created_by_id': aplication.created_by_id,
                 'updated_by_id': aplication.updated_by_id,
-                'make_name': aplication.make.make,
-                'model_name': aplication.model.model,
-                'segment_name': aplication.segment.segment,
-                'year_name': aplication.year.year,
-                'market_name': aplication.market,
+                'make_name': aplication.make.make if aplication.make else 'N/A',
+                'model_name': aplication.model.model if aplication.model else 'N/A',
+                'segment_name': aplication.segment.segment if aplication.segment else 'N/A',
+                'year_name': aplication.year.year if aplication.year else 'N/A',
+                'market_name': aplication.get_market_display(),  # Para mostrar el valor legible de market
             })
 
         aplication_form = AplicationForm()
         ctx = {
             'title': 'Aplication',
-            'headers': json.dumps(['Segment', 'Make', 'Model', 'Year', 'Market']),
-            'fields': json.dumps(['segment_name', 'make_name', 'model_name', 'year_name', 'market_name']),
-            'object_list_json': json.dumps(aplication_list),
-            'object_list': al,
+            'headers': ['Segment', 'Make', 'Model', 'Year', 'Market'],
+            'fields': ['segment_name', 'make_name', 'model_name', 'year_name', 'market_name'],
+            'object_list': page_obj,
             'form': aplication_form,
+            'aplications' : aplication_list,
             'return_url': 'vehicles:all',
             'create_url': 'vehicles:aplication_create',
             'update_url': 'vehicles:aplication_update',
             'delete_url': 'vehicles:aplication_delete',
-            'make_count': mc,
-            'year_count': yc,
-            'model_count': mlc,
-            'segment_count': sg,
+            'page_obj': page_obj,
+            'show_search_bar': True,
         }
         return render(request, 'vehicles/aplication_list.html', ctx)
+
+
 
 class LoadMoreAplicationsView(LoginRequiredMixin, View):
     def get(self, request):
@@ -366,7 +367,7 @@ class AplicationUpdate(LoginRequiredMixin, UpdateView):
     model = Aplication
     form_class = AplicationForm
     success_url = reverse_lazy('vehicles:all')
-    template_name = 'vehicles/update_form_partial.html'
+    template_name = 'vehicles/modal.html'
 
     def form_valid(self, form):
         form.instance.updated_by = self.request.user
@@ -489,13 +490,13 @@ from .models import Part
 from .forms import PartForm
 
 class PartListView(LoginRequiredMixin, View):
-    
+
     def get(self, request):
         strval = request.GET.get('search_here', '')
-        
+
         if strval:
-            query = Q(sku__icontains=strval)  # Búsqueda en el campo SKU de Part
-            query.add(Q(name__icontains=strval), Q.OR)  # Búsqueda en el campo Name de Part
+            query = Q(sku__icontains=strval)
+            query.add(Q(name__icontains=strval), Q.OR)
             query.add(Q(categories__category__icontains=strval), Q.OR)
             query.add(Q(applications__segment__segment__icontains=strval), Q.OR)
             query.add(Q(applications__make__make__icontains=strval), Q.OR)
@@ -503,18 +504,35 @@ class PartListView(LoginRequiredMixin, View):
             query.add(Q(applications__model__model__icontains=strval), Q.OR)
             query.add(Q(applications__market__icontains=strval), Q.OR)
             query.add(Q(notes__icontains=strval), Q.OR)
-
             parts = Part.objects.filter(query).select_related(
-            'categories', 'applications__segment', 'applications__make',
-            'applications__year', 'applications__model'
-        ).prefetch_related('categories', 'applications').distinct().order_by('-updated_at')
+                'categories', 
+                'applications__segment',
+                'applications__make',
+                'applications__year', 
+                'applications__model'
+            ).prefetch_related('categories', 
+                               'applications').distinct().only(
+                                'sku', 
+                                'name', 
+                                'categories', 
+                                'applications', 
+                                'notes', 
+                                'description'
+            ).order_by('sku')
         else:
-            parts = Part.objects.all().order_by('-updated_at')[:10]
+            # Define 'parts' con todos los objetos si no hay búsqueda
+            parts = Part.objects.all().only(
+                'sku', 
+                'name', 
+                'categories', 
+                'applications', 
+                'notes', 
+                'description'
+            ).order_by('sku')
 
-        paginator = Paginator(parts, 10)
-        page_number = request.GET.get('page')
+        paginator = Paginator(parts, 20)
+        page_number = request.GET.get('page', 1)
         page_obj = paginator.get_page(page_number)
-
 
         part_form = PartForm()
         ctx = {
@@ -527,7 +545,7 @@ class PartListView(LoginRequiredMixin, View):
             'create_url': 'vehicles:part_create',
             'update_url': 'vehicles:part_update',
             'delete_url': 'vehicles:part_delete',
-            'page_obj' : page_obj,
+            'page_obj': page_obj,
         }
         return render(request, 'vehicles/part_list.html', ctx)
 

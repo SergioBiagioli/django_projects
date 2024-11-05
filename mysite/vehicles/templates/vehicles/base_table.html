@@ -1,29 +1,229 @@
-{% extends 'vehicles/base_table_sin_form.html' %}
 {% load static %}
 {% load crispy_forms_tags %}
 {% load vehicles_extras %}
 
 {% block content %}
-<div class="container">
-    <div class="row">
-        <div class="col-md-7">
-            {% block table_content %}
-                {% include "vehicles/base_table_sin_form.html"%}
-            {% endblock table_content %}
-        </div>
-        <div class="col-md-5">
-            <h2>Add a {{ title }}</h2>
-            <form action="{% url create_url %}" method="post" class="centered-form">
-                {% csrf_token %}
-                <table>
-                    {{ form|crispy }}
+<style>
+    .centered-form {
+        max-width: 600px;
+        margin: 0 auto;
+    }
+    .table-responsive {
+        max-height: 600px;
+        overflow: auto;
+        display: block;
+        width: 100%;
+    }
+    .btn-update {
+        background-color: #7da0aa;
+        color: white;
+        width: 60px;
+        text-align: center;
+    }
+    .btn-delete {
+        background-color: #b4424e;
+        color: white;
+        width: 60px;
+        text-align: center;
+    }
+    .application-list {
+        list-style-type: none;
+        padding: 0;
+    }
+    .application-list li {
+        border-bottom: 1px solid #ccc;
+        padding: 5px 0;
+    }
+
+</style>
+
+<div class="row">
+    <div class="col-md-12">
+        <h1>{{ title }} List</h1>
+
+        {% if show_search_bar %}
+            {% include "vehicles/search_bar.html" %}
+        {% endif %}
+
+        <div id="results">
+            {% if object_list %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            {% for header in headers %}
+                            <th>{{ header }}</th>
+                            {% endfor %}
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="table-body">
+                        {% for obj in object_list %}
+                        <tr>
+                            {% for field in fields %}
+                                <td>
+                                    {% if title == "Aplication" %}
+                                        {% if field == "segment_name" %}
+                                            {{ obj.segment.segment }}
+                                        {% elif field == "make_name" %}
+                                            {{ obj.make.make }}
+                                        {% elif field == "model_name" %}
+                                            {{ obj.model.model }}
+                                        {% elif field == "year_name" %}
+                                            {{ obj.year.year }}
+                                        {% elif field == "market_name" %}
+                                            {{ obj.get_market_display }}
+                                        {% endif %}
+                                    {% elif title == "Part" %}
+                                        {% if field == "sku" %}
+                                            {{ obj.sku }}
+                                        {% elif field == "name" %}
+                                            {{ obj.name }}
+                                        {% elif field == "categories" %}
+                                            {% for category in obj.categories.all %}
+                                                {{ category.category }}{% if not forloop.last %}, {% endif %}
+                                            {% endfor %}
+                                        {% elif field == "applications" %}
+                                            <td>
+                                                <ul class="application-list">
+                                                    {% for application in obj.applications.all|dictsort:"make.make" %}
+                                                        <!-- <li> -->
+                                                            {{ application.make.make }} > {{ application.model.model }} > {{ application.year.year }} > {{ application.segment.segment }}<br>
+                                                        <!-- </li> -->
+                                                    {% endfor %}
+                                                </ul>
+                                            </td>
+                                        {% elif field == "properties" %}
+                                            {% for property in obj.properties.all %}
+                                                {{ property.property }}: <b>{{ property.value }}<br></b>
+                                            {% endfor %}
+                                        {% elif field == "notes" %}
+                                            <i>{{ obj.notes }}</i>
+                                        {% elif field == "description" %}
+                                            {{ obj.description }}
+                                        {% endif %}
+                                    {% endif %}
+                                </td>
+                            {% endfor %}
+                            <td class="action-buttons">
+                                <button type="button" class="btn btn-update btn-sm" data-bs-toggle="modal" data-bs-target="#updateModalTemplate" data-url="{% url update_url obj.id %}">Update</button>
+                                <button type="button" class="btn btn-delete btn-sm" data-bs-toggle="modal" data-bs-target="#deleteModalTemplate" data-url="{% url delete_url obj.id %}">Delete</button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                    
                 </table>
-                <input type="submit" value="Submit" class="btn btn-primary mt-3">
-            </form>
+            </div>
+            {% else %}
+                <p>There are no {{ title }}s in the list.</p>
+            {% endif %}
+
+            <!-- Pagination -->
+            <nav aria-label="Page navigation example">
+                <ul class="pagination">
+                    {% if page_obj.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page=1">First</a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.previous_page_number }}">&laquo;</a>
+                        </li>
+                    {% endif %}
+                    {% for num in page_obj.paginator.page_range %}
+                        {% if num == page_obj.number %}
+                            <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                        {% elif num > page_obj.number|add:-3 and num < page_obj.number|add:3 %}
+                            <li class="page-item"><a class="page-link" href="?page={{ num }}">{{ num }}</a></li>
+                        {% endif %}
+                    {% endfor %}
+                    {% if page_obj.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.next_page_number }}">&raquo;</a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}">Last</a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </nav>
         </div>
     </div>
 </div>
-{% endblock content %}
+
+<!-- Modals for Update and Delete -->
+<div class="modal fade" id="updateModalTemplate" tabindex="-1" aria-labelledby="updateModalLabelTemplate" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="updateModalLabelTemplate">Update {{ title }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="updateFormTemplate" method="post">
+                    {% csrf_token %}
+                    <div id="updateFormContent"></div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="submit" class="btn btn-primary" form="updateFormTemplate">Save changes</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="deleteModalTemplate" tabindex="-1" aria-labelledby="deleteModalLabelTemplate" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteModalLabelTemplate">Delete {{ title }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="deleteFormTemplate" method="post">
+                    {% csrf_token %}
+                    <p>Are you sure you want to delete this {{ title }}?</p>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <button type="submit" class="btn btn-danger">Delete</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
 
 
-<!-- addasda -->
+{% block scripts %}
+<script src="{% static 'vehicles/js/search_table.js' %}"></script>
+<script>
+    const data = JSON.parse('{{ object_list_json|escapejs }}');
+    const headers = JSON.parse('{{ headers|escapejs }}');
+    const fields = JSON.parse('{{ fields|escapejs }}');
+    const title = '{{ title }}';
+    const updateUrl = '{% url update_url 99999 %}'.replace('99999', '${id}');
+    const deleteUrl = '{% url delete_url 99999 %}'.replace('99999', '${id}');
+
+    console.log("Title:", title);  // Verificar el valor del título
+    initSearchTable(data, headers, fields, title, updateUrl, deleteUrl);
+
+    document.addEventListener("DOMContentLoaded", () => {
+        const rows = document.querySelectorAll(".clickable-row");
+        console.log("Rows found:", rows);  // Verificar si se encuentran las filas
+        rows.forEach(row => {
+            row.addEventListener("click", (event) => {
+                if (!event.target.closest('.action-buttons')) {
+                    const href = row.dataset.href;
+                    console.log("Row clicked, href:", href);  // Verificar el valor del href
+                    if (href) {
+                        window.location.href = href;
+                    }
+                }
+            });
+        });
+    });
+</script>
+{% endblock scripts %}

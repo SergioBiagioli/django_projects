@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.urls import path
-from vehicles.views import MainView
+from vehicles.views import AplicationList
 
 urlpatterns = [
-    path('', MainView.as_view(), name='mainsearch'),
+    path('', AplicationList.as_view(), name='mainsearch'),
 ]

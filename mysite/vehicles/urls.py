@@ -1,10 +1,10 @@
 from django.urls import path
 from . import views
-from .views import AplicationDetailView, AplicationPhotoUploadView, AplicationPhotoDeleteView
+from .views import AplicationDetailView, AplicationPhotoUploadView, AplicationPhotoDeleteView, AplicationList
 
 app_name = 'vehicles'
 urlpatterns = [
-    path('', views.MainView.as_view(), name='all'),
+    path('', views.AplicationList.as_view(), name='all'),
     path('load_more/', views.LoadMoreAplicationsView.as_view(), name='load_more_aplications'),
     
     path('aplication/<int:pk>/', AplicationDetailView.as_view(), name='aplication_detail'),
