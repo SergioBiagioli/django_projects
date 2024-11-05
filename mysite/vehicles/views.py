@@ -537,8 +537,8 @@ class PartListView(LoginRequiredMixin, View):
         part_form = PartForm()
         ctx = {
             'title': 'Part',
-            'headers': ['Sku', 'Name', 'Categories', 'Applications', 'Property', 'Notes', 'Description'],
-            'fields': ['sku', 'name', 'categories', 'applications', 'properties', 'description'],
+            'headers': ['Sku',  'Categories', 'Applications', 'Property', 'Notes', 'Description'],
+            'fields': ['sku',  'categories', 'applications', 'properties', 'notes', 'description'],
             'object_list': page_obj,
             'form': part_form,
             'search_here': strval,
