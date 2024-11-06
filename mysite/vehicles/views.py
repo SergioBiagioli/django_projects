@@ -54,6 +54,7 @@ class AplicationList(LoginRequiredMixin, View):
             'delete_url': 'vehicles:aplication_delete',
             'page_obj': page_obj,
             'show_search_bar': True,
+            'has_detail_page' : True,
         }
         return render(request, 'vehicles/aplication_list.html', ctx)
 

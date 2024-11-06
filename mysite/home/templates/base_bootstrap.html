@@ -1,0 +1,34 @@
+<!-- base_bootstrap.html -->
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{% block title %}{{ settings.APP_NAME }}{% endblock %}</title>
+    <!-- Styles Fonts Awesome  -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css" integrity="sha512-Kc323vGBEqzTmouAECnVceyQqyqdsSiqLQISBL29aUW4U/M7pSPA/gEUZQqv1cwx4OnYxTxve5UMg5GT6L4JJg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    
+    <!-- Scripts -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
+    <meta name="dj4e" content="8c44802139a0ef4d1b6da34019ec7095">
+    <meta name="dj4e-code" content="42172458896298">
+    {% block head %}{% endblock %}
+</head>
+<body>
+{% block navbar %}{% endblock %}
+<div class="container">
+    {% block welcome %}{% endblock %}
+    {% block messages %}
+        {% if messages %}
+        {% for msg in messages %}
+            <div class="alert alert-{{msg.level_tag}}" role="alert">
+            {{msg.message}}
+            </div>
+        {% endfor %}
+        {% endif %}
+    {% endblock %}
+    {% block content %}{% endblock %}
+</div>
+{% block footer %}{% endblock %}
+{% block scripts %}{% endblock %}
+</body>
+</html>

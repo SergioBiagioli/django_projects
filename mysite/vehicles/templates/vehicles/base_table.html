@@ -48,12 +48,13 @@
         border-collapse: collapse;
     }
 
-    th, td {
+    th, td{
         padding: 8px;
         text-align: left;
         vertical-align: middle;
         border: 1px solid #ddd;
         white-space: nowrap; /* Evita que el texto se divida en varias líneas */
+        
     }
 
     th {
@@ -71,9 +72,14 @@
         list-style-type: none;
         padding: 0;
     }
-    .application-list li {
+    .application-list li:hover {
         border-bottom: 1px solid #ccc;
         padding: 5px 0;
+        background-color: #f3f8f8;
+    }
+    .clickable-row:hover {
+        cursor: pointer;
+        background-color: #f3f8f8; /* Cambia el color según tu preferencia */
     }
 
 </style>
@@ -100,7 +106,7 @@
                     </thead>
                     <tbody id="table-body">
                         {% for obj in object_list %}
-                        <tr>
+                        <tr {% if has_detail_page %} class="clickable-row" data-href="{% url 'vehicles:aplication_detail' obj.id %}" {% endif %}>
                             {% for field in fields %}
                                 <td>
                                     {% if title == "Aplication" %}
@@ -126,7 +132,7 @@
                                             {% endfor %}
                                         {% elif field == "applications" %}
                                             <div class="application-list-container">
-                                                <ul class="application-list" >
+                                                <ul class="application-list">
                                                     {% for application in obj.applications.all|dictsort:"make.make" %}
                                                         <li>
                                                             {{ application.make.make }} > {{ application.model.model }} > {{ application.year.year }} > {{ application.segment.segment }}
@@ -158,7 +164,6 @@
             {% else %}
                 <p>There are no {{ title }}s in the list.</p>
             {% endif %}
-        
 
             <!-- Pagination -->
             <nav aria-label="Page navigation example">
@@ -241,28 +246,16 @@
 {% block scripts %}
 <script src="{% static 'vehicles/js/search_table.js' %}"></script>
 <script>
-    const data = JSON.parse('{{ object_list_json|escapejs }}');
-    const headers = JSON.parse('{{ headers|escapejs }}');
-    const fields = JSON.parse('{{ fields|escapejs }}');
-    const title = '{{ title }}';
-    const updateUrl = '{% url update_url 99999 %}'.replace('99999', '${id}');
-    const deleteUrl = '{% url delete_url 99999 %}'.replace('99999', '${id}');
-
-    console.log("Title:", title);  // Verificar el valor del título
-    initSearchTable(data, headers, fields, title, updateUrl, deleteUrl);
-
     document.addEventListener("DOMContentLoaded", () => {
         const rows = document.querySelectorAll(".clickable-row");
-        console.log("Rows found:", rows);  // Verificar si se encuentran las filas
         rows.forEach(row => {
             row.addEventListener("click", (event) => {
                 if (!event.target.closest('.action-buttons')) {
-                    const href = row.dataset.href;
-                    console.log("Row clicked, href:", href);  // Verificar el valor del href
-                    if (href) {
-                        window.location.href = href;
-                    }
+                const href = row.dataset.href;
+                if (href) {
+                    window.location.href = href;
                 }
+            }
             });
         });
     });
