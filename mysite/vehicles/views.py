@@ -13,6 +13,14 @@ import json
 from datetime import datetime
 from django.db.models import Q
 from django.core.paginator import Paginator
+from django.urls import reverse
+from django.apps import apps
+from django.db.models import CharField, ForeignKey, ManyToManyField, IntegerField
+import logging
+from django.db.models.functions import Cast
+
+
+
 
 
 
@@ -85,7 +93,85 @@ class SearchAplicationsView(LoginRequiredMixin, View):
         context = {'aplication_list': aplications}
         html = render_to_string('vehicles/aplication_rows.html', context)
         return JsonResponse({'html': html})
+    
+# Configurar un logger
+logger = logging.getLogger(__name__)
 
+def ajax_search_view(request):
+    try:
+        query = request.GET.get('query', '').strip()
+        model_type = request.GET.get('model_type')
+        
+        if len(query) < 3:
+            return JsonResponse({'results': [], 'total_results': 0})
+        
+        # Obtener el modelo dinámicamente
+        try:
+            model = apps.get_model('vehicles', model_type.capitalize())
+            searchable_fields = getattr(model, 'searchable_fields', [])  # Obtiene los campos de búsqueda
+        except LookupError:
+            return JsonResponse({'results': [], 'total_results': 0, 'error': 'Modelo no encontrado'}, status=404)
+
+        # Inicializamos el QuerySet
+        queryset = model.objects.all()
+        
+        # Construcción del query `Q`
+        search_terms = query.split()
+        q_objects = Q()
+        
+        for term in search_terms:
+            term_q = Q()
+            for field in searchable_fields:
+                field_object = model._meta.get_field(field)
+                
+                if isinstance(field_object, CharField):
+                    # Aplica icontains solo a CharField
+                    term_q |= Q(**{f"{field}__icontains": term})
+                elif isinstance(field_object, ForeignKey):
+                    # Para ForeignKey, busca un IntegerField o CharField en el modelo relacionado
+                    related_model = field_object.related_model
+                    related_integer_field = next(
+                        (f.name for f in related_model._meta.get_fields() if isinstance(f, IntegerField) and f.name == 'year'), 
+                        None
+                    )
+                    if related_integer_field:
+                        # Anotamos el IntegerField del modelo relacionado (como 'year') como texto y aplicamos icontains
+                        annotated_field = f"{field}__{related_integer_field}_as_text"
+                        queryset = queryset.annotate(**{annotated_field: Cast(f"{field}__{related_integer_field}", CharField())})
+                        term_q |= Q(**{f"{annotated_field}__icontains": term})
+                    else:
+                        # Si el modelo relacionado tiene CharField, aplica icontains en el campo relacionado de tipo CharField
+                        related_char_field = next(
+                            (f.name for f in related_model._meta.get_fields() if isinstance(f, CharField)), 
+                            None
+                        )
+                        if related_char_field:
+                            term_q |= Q(**{f"{field}__{related_char_field}__icontains": term})
+                elif isinstance(field_object, IntegerField):
+                    # Anotamos el campo IntegerField como texto y aplicamos icontains en el campo anotado
+                    annotated_field = f"{field}_as_text"
+                    queryset = queryset.annotate(**{annotated_field: Cast(field, CharField())})
+                    term_q |= Q(**{f"{annotated_field}__icontains": term})
+
+            q_objects &= term_q
+
+        queryset = queryset.filter(q_objects).distinct()
+        results = queryset[:3]
+        total_results = queryset.count()
+
+        result_list = [{'id': obj.id, 'text': str(obj)} for obj in results]
+        
+        return JsonResponse({
+            'results': result_list,
+            'total_results': total_results
+        })
+        
+    except Exception as e:
+        return JsonResponse({'results': [], 'total_results': 0, 'error': str(e)}, status=500)
+
+
+
+    
 class MakeView(LoginRequiredMixin, View):
     def get(self, request):
         makes = Make.objects.all().order_by('make')
@@ -547,6 +633,7 @@ class PartListView(LoginRequiredMixin, View):
             'update_url': 'vehicles:part_update',
             'delete_url': 'vehicles:part_delete',
             'page_obj': page_obj,
+            'show_search_bar': True,
         }
         return render(request, 'vehicles/part_list.html', ctx)
 

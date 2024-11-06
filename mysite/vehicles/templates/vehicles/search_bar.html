@@ -1,7 +1,84 @@
+<style>
+    .result-list {
+        position: absolute;
+        background-color: white;
+        border: 1px solid #ddd;
+        max-height: 200px;
+        overflow-y: auto;
+        width: 100%;
+        z-index: 1000;
+        margin-top: 45px; /* Separa el contenedor de resultados del campo de búsqueda */
+        box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1); /* Añade sombra para mayor visibilidad */
+    }
 
-<form method="get" action="">
-    <div class="input-group mb-3 mt-3">
-        <input type="text" id="search_here" name="search_here" class="form-control" placeholder="Search here..." value="{{ search_here }}">
-        <button type="submit" class="btn btn-primary"><i class="fa fa-search"></i></button>
-    </div>
-</form> 
+    .result-item {
+        padding: 8px;
+        cursor: pointer;
+    }
+
+    .result-item:hover {
+        background-color: #f0f0f0;
+    }
+    </style>
+    
+    <form method="get" action="">
+        <div class="input-group mb-3 mt-3 position-relative">
+            <input type="text" id="search_here" name="search_here" class="form-control" placeholder="Search here..." value="{{ search_here }}" data-model="{{ title|lower }}">
+            <button type="submit" class="btn btn-primary"><i class="fa fa-search"></i></button>
+            <div id="resultContainer" class="result-list"></div>
+        </div>
+    </form>
+    
+    <script>
+
+        
+document.addEventListener("DOMContentLoaded", function() {
+    const searchInput = document.getElementById("search_here");
+    const resultContainer = document.getElementById("resultContainer");
+
+    searchInput.addEventListener("keyup", function(event) {
+        const query = searchInput.value.trim();
+        const modelType = searchInput.getAttribute("data-model");
+
+        // Detecta la tecla Esc para ocultar los resultados
+        if (event.key === "Escape") {
+            resultContainer.innerHTML = "";
+            return;
+        }
+
+        if (query.length >= 3) {
+            fetch(`/vehicles/ajax_search/?query=${query}&model_type=${modelType}`)
+                .then(response => response.json())
+                .then(data => {
+                    resultContainer.innerHTML = ""; // Limpia resultados anteriores
+                    const results = data.results;
+
+                    if (results.length) {
+                        results.forEach(item => {
+                            const resultItem = document.createElement("div");
+                            resultItem.classList.add("result-item");
+                            resultItem.textContent = item.text;
+                            resultItem.addEventListener("click", () => {
+                                window.location.href = `${modelType}/${item.id}`;
+                            });
+                            resultContainer.appendChild(resultItem);
+                        });
+                        if (data.total_results > results.length) {
+                            const extraItem = document.createElement("div");
+                            extraItem.classList.add("result-item");
+                            extraItem.textContent = `Se encontraron ${data.total_results} coincidencias`;
+                            resultContainer.appendChild(extraItem);
+                        }
+                    } else {
+                        resultContainer.innerHTML = "<div class='result-item'>No se encontraron resultados.</div>";
+                    }
+                });
+        } else {
+            resultContainer.innerHTML = "";  // Limpia si hay menos de 3 letras
+        }
+    });
+});
+
+
+    </script>
+    

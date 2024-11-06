@@ -6,6 +6,8 @@ app_name = 'vehicles'
 urlpatterns = [
     path('', views.AplicationList.as_view(), name='all'),
     path('load_more/', views.LoadMoreAplicationsView.as_view(), name='load_more_aplications'),
+    path('ajax_search/', views.ajax_search_view, name='ajax_search'),
+
     
     path('aplication/<int:pk>/', AplicationDetailView.as_view(), name='aplication_detail'),
     path('aplication/<int:pk>/upload/', AplicationPhotoUploadView.as_view(), name='upload_photo'),

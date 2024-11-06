@@ -24,6 +24,8 @@ class Make(BaseModel):
         unique=True
     )
 
+    searchable_fields = ['make']
+
     def __str__(self):
         return self.make
 
@@ -73,6 +75,11 @@ class Aplication(BaseModel):
     year = models.ForeignKey(Year, on_delete=models.CASCADE)
     model = models.ForeignKey(Model, on_delete=models.CASCADE)
     market = models.CharField(max_length=3, choices=market_choices)
+    
+    searchable_fields = ['segment', 'make', 'year', 'model', 'market']
+
+    
+    
     
     def __str__(self):
         return f"{self.segment} > {self.make} > {self.year} > {self.model}"
@@ -130,6 +137,9 @@ class Part(BaseModel):
     applications = models.ManyToManyField(Aplication, related_name='parts')
     description = models.TextField(blank=True, null=True)
     notes = models.TextField(blank=True, null=True)
+
+    searchable_fields = ['sku', 'name', 'categories', 'aplications', 'description','notes']
+
 
     def __str__(self):
         categories_str = ' > '.join([cat.name for cat in self.categories.all()])
